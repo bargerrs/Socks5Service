@@ -10,10 +10,12 @@
 
 #define SECONDS(x) (x * 1000 )
 
-#define AUTHENTICATION_ENABLED 1 // change to 1 for username password, leave 0 to require no authentication
+//TODO
+#define AUTHENTICATION_ENABLED 0 // change to 1 for username password, leave 0 to require no authentication
 
 #define METHOD_NUMBER 2
 
+//TODO
 // hardcoded inactive creds, use proper creds check if you want this
 #define PREDEF_USERNAME "hello"
 #define PREDEF_PASSWORD "bello"
@@ -552,7 +554,7 @@ exitthread:
 
 
 
-int StartServer(WCHAR *ip, WCHAR *port)
+int StartServer(WCHAR *ip, WCHAR *port, HANDLE serviceStopEvent)
 {
 	SOCKET	s, c;
 	WSADATA	wsaData;
@@ -561,7 +563,6 @@ int StartServer(WCHAR *ip, WCHAR *port)
 	int		ret;
 
 	wprintf(L"[*] Firing up SOCKS server\n");
-	wprintf(L"[*] Coded by Balazs Bucsay <socksserver[at]rycon[dot]hu>\n");
 	if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
 	{
 		wprintf(L"[-] SOCKS WSAStartup() failed with error: %ld %ld\n", ret, WSAGetLastError());
@@ -612,6 +613,13 @@ int StartServer(WCHAR *ip, WCHAR *port)
 			WSACleanup();
 			return -1;
 		}
+		if (WaitForSingleObject(serviceStopEvent, 0) == WAIT_OBJECT_0) {
+			wprintf(L"[-] SERVICE STOPPED \n");
+			closesocket(s);
+			WSACleanup();
+			return -1;
+		}
+		
 		wprintf(L"[+] SOCKS Client connected, starting thread\n");
 		_beginthread(HandleClient, 0, (void*)c);
 	}
